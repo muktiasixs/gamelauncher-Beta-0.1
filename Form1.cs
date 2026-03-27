@@ -13,35 +13,29 @@ namespace gamelauncher
     {
         private TextBox txtSearch;
         private FlowLayoutPanel flowGameList;
-        private Panel listContainer; // Kontainer tambahan untuk menyembunyikan scrollbar
-        private Panel detailPane;
-        private Label lblStatus;
-
+        private Panel listContainer, detailPane;
+        private Label lblStatus, lblDetailName, lblDetailInfo;
         private PictureBox detailIcon;
-        private Label lblDetailName;
-        private Label lblDetailInfo;
+        private FileSystemWatcher watcher; // Penjaga folder
 
         private List<string> allGamePaths = new List<string>();
-        private string configPath = "config.json";
-        private string currentRootPath = "";
+        private string configPath = "config.json", currentRootPath = "";
+        private Image rawBgImage = null;
 
-        private string[] ignoreWords = { "helper", "crash", "unity", "setup", "startup", "notification", "unins", "redist", "vc_redist", "dxwebsetup", "engine", "win64", "win32", "x64", "x86", "commonredist", "dotnet", "framework", "physx", "touchup", "cleanup", "workshop" };
+        private string[] ignoreWords = { "helper", "crash", "unity", "setup", "startup", "notification", "unins", "redist", "vc_redist", "dxwebsetup", "engine", "win64", "win32", "x64",
+                                        "x86", "commonredist", "dotnet", "framework", "physx", "touchup", "cleanup", "workshop", "bug", "opinion" };
 
         public Form1()
         {
             SetupUI();
             LoadConfig();
-            this.SizeChanged += (s, e) =>
-            {
-                UpdateScrollHiddenWidth();
-                RefreshList();
-            };
+            this.SizeChanged += (s, e) => { UpdateScrollHiddenWidth(); RefreshList(); };
         }
 
         private void SetupUI()
         {
-            this.Text = "Game Launcher Pro v1.7";
-            this.Icon = new Icon("launchergame.ico");
+            this.Text = "Game Launcher Pro v1.9 (Auto-Sync)";
+            try { this.Icon = new Icon("launchergame.ico"); } catch { }
             this.Size = new Size(1100, 750);
             this.MinimumSize = new Size(950, 600);
             this.BackColor = Color.FromArgb(20, 20, 20);
@@ -49,31 +43,17 @@ namespace gamelauncher
 
             // --- TOP BAR ---
             Panel topBar = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.FromArgb(30, 30, 30) };
-            txtSearch = new TextBox
-            {
-                Location = new Point(25, 25),
-                Width = 350,
-                PlaceholderText = " Cari game...",
-                BackColor = Color.FromArgb(45, 45, 45),
-                ForeColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
+            txtSearch = new TextBox { Location = new Point(25, 25), Width = 350, PlaceholderText = " Cari game...", BackColor = Color.FromArgb(45, 45, 45), ForeColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             txtSearch.TextChanged += (s, e) => RefreshList();
 
-            Button btnBrowse = new Button
-            {
-                Text = "Set Folder",
-                Location = new Point(390, 24),
-                Width = 120,
-                Height = 32,
-                FlatStyle = FlatStyle.Flat,
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(60, 60, 60),
-                Cursor = Cursors.Hand
-            };
-            btnBrowse.FlatAppearance.BorderSize = 0;
+            Button btnBrowse = CreateButton("Set Folder", new Point(390, 24), 110, Color.FromArgb(60, 60, 60));
             btnBrowse.Click += HandleBrowse;
-            topBar.Controls.Add(txtSearch); topBar.Controls.Add(btnBrowse);
+
+            Button btnBg = CreateButton("🖼 Change BG", new Point(topBar.Width - 140, 24), 110, Color.FromArgb(0, 120, 215));
+            btnBg.Anchor = AnchorStyles.Right;
+            btnBg.Click += HandleChangeBg;
+
+            topBar.Controls.AddRange(new Control[] { txtSearch, btnBrowse, btnBg });
 
             // --- BOTTOM BAR ---
             Panel bottomBar = new Panel { Dock = DockStyle.Bottom, Height = 30, BackColor = Color.FromArgb(25, 25, 25) };
@@ -84,104 +64,94 @@ namespace gamelauncher
             detailPane = new Panel { Dock = DockStyle.Right, Width = 350, BackColor = Color.FromArgb(25, 25, 25), Padding = new Padding(10) };
             detailIcon = new PictureBox { Size = new Size(128, 128), Location = new Point(111, 40), SizeMode = PictureBoxSizeMode.StretchImage };
             lblDetailName = new Label { Text = "Pilih Game", ForeColor = Color.White, Font = new Font("Segoe UI", 14, FontStyle.Bold), Location = new Point(10, 185), Width = 330, Height = 70, TextAlign = ContentAlignment.TopCenter };
-            lblDetailInfo = new Label { Text = "", ForeColor = Color.LightGray, Location = new Point(30, 265), Width = 290, Height = 250 };
-
-            Button btnOpenLoc = new Button { Text = "Open File Location", Dock = DockStyle.Bottom, Height = 45, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(50, 50, 50) };
-            btnOpenLoc.FlatAppearance.BorderSize = 0;
+            lblDetailInfo = new Label { Text = "", ForeColor = Color.LightGray, Location = new Point(30, 255), Width = 290, Height = 250 };
+            Button btnOpenLoc = CreateButton("Open File Location", Point.Empty, 0, Color.FromArgb(50, 50, 50));
+            btnOpenLoc.Dock = DockStyle.Bottom; btnOpenLoc.Height = 45;
             btnOpenLoc.Click += (s, e) => { if (lblDetailInfo.Tag != null) Process.Start("explorer.exe", Path.GetDirectoryName(lblDetailInfo.Tag.ToString())); };
 
-            detailPane.Controls.Add(detailIcon); detailPane.Controls.Add(lblDetailName);
-            detailPane.Controls.Add(lblDetailInfo); detailPane.Controls.Add(btnOpenLoc);
+            detailPane.Controls.AddRange(new Control[] { detailIcon, lblDetailName, lblDetailInfo, btnOpenLoc });
 
-            // --- LIST CONTAINER (Trik Sembunyikan Scrollbar) ---
-            listContainer = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(0) };
-
-            flowGameList = new FlowLayoutPanel
-            {
-                Location = new Point(0, 0),
-                AutoScroll = true,
-                BackColor = Color.Transparent,
-                WrapContents = false,
-                FlowDirection = FlowDirection.TopDown,
-                Padding = new Padding(20, 10, 20, 10)
-            };
-
+            // --- LIST CONTAINER ---
+            listContainer = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(20, 20, 20) };
+            listContainer.Paint += DrawBackground;
+            flowGameList = new FlowLayoutPanel { Location = new Point(0, 0), AutoScroll = true, BackColor = Color.Transparent, WrapContents = false, FlowDirection = FlowDirection.TopDown, Padding = new Padding(20, 10, 20, 10) };
             listContainer.Controls.Add(flowGameList);
-            this.Controls.Add(listContainer);
-            this.Controls.Add(detailPane);
-            this.Controls.Add(bottomBar);
-            this.Controls.Add(topBar);
+
+            this.Controls.AddRange(new Control[] { listContainer, detailPane, bottomBar, topBar });
         }
 
-        private void UpdateScrollHiddenWidth()
+        private Button CreateButton(string text, Point loc, int w, Color bg) => new Button { Text = text, Location = loc, Width = w, Height = 32, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = bg, Cursor = Cursors.Hand };
+
+        // --- LOGIKA AUTO-UPDATE FOLDER ---
+        private void SetupWatcher(string path)
         {
-            // Buat lebar flowGameList lebih lebar 25px dari kontainernya agar scrollbar sembunyi di kanan
-            flowGameList.Width = listContainer.Width + 25;
-            flowGameList.Height = listContainer.Height;
+            if (!Directory.Exists(path)) return;
+            watcher?.Dispose();
+            watcher = new FileSystemWatcher(path)
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite,
+                EnableRaisingEvents = true
+            };
+            // Jika ada perubahan, panggil ScanGames
+            watcher.Created += (s, e) => this.Invoke(new Action(() => ScanGames(currentRootPath)));
+            watcher.Deleted += (s, e) => this.Invoke(new Action(() => ScanGames(currentRootPath)));
+            watcher.Renamed += (s, e) => this.Invoke(new Action(() => ScanGames(currentRootPath)));
         }
+
+        private void DrawBackground(object sender, PaintEventArgs e)
+        {
+            if (rawBgImage == null) return;
+            float scale = Math.Max((float)listContainer.Width / rawBgImage.Width, (float)listContainer.Height / rawBgImage.Height);
+            int newW = (int)(rawBgImage.Width * scale), newH = (int)(rawBgImage.Height * scale);
+            var matrix = new System.Drawing.Imaging.ColorMatrix(new float[][] { new float[] { 0.4f, 0, 0, 0, 0 }, new float[] { 0, 0.4f, 0, 0, 0 }, new float[] { 0, 0, 0.4f, 0, 0 }, new float[] { 0, 0, 0, 1, 0 }, new float[] { 0, 0, 0, 0, 1 } });
+            var attr = new System.Drawing.Imaging.ImageAttributes(); attr.SetColorMatrix(matrix);
+            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImage(rawBgImage, new Rectangle((listContainer.Width - newW) / 2, (listContainer.Height - newH) / 2, newW, newH), 0, 0, rawBgImage.Width, rawBgImage.Height, GraphicsUnit.Pixel, attr);
+        }
+
+        private void HandleChangeBg(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Images|*.jpg;*.jpeg;*.png;*.bmp" })
+                if (ofd.ShowDialog() == DialogResult.OK) { SetBackground(ofd.FileName); SaveConfig(currentRootPath, ofd.FileName); }
+        }
+
+        private void SetBackground(string path)
+        {
+            if (!File.Exists(path)) return;
+            rawBgImage?.Dispose();
+            rawBgImage = Image.FromFile(path);
+            listContainer.Invalidate();
+        }
+
+        private void UpdateScrollHiddenWidth() { if (listContainer != null) { flowGameList.Width = listContainer.Width + 25; flowGameList.Height = listContainer.Height; } }
 
         private void RefreshList()
         {
             if (flowGameList == null) return;
             flowGameList.Controls.Clear();
             flowGameList.SuspendLayout();
-
-            string query = txtSearch.Text.ToLower();
-            int count = 0;
-
             foreach (var path in allGamePaths)
             {
                 string displayName = GetGameName(path);
-                if (!string.IsNullOrEmpty(query) && !displayName.ToLower().Contains(query)) continue;
-                count++;
+                if (!string.IsNullOrEmpty(txtSearch.Text) && !displayName.ToLower().Contains(txtSearch.Text.ToLower())) continue;
 
-                // Lebar kartu disesuaikan agar pas di mata (dikurangi 45px dari kontainer asli)
-                int cardWidth = listContainer.Width - 45;
-                Panel card = new Panel { Size = new Size(cardWidth, 75), Margin = new Padding(0, 0, 0, 10), BackColor = Color.FromArgb(35, 35, 35), Cursor = Cursors.Hand };
-
+                Panel card = new Panel { Size = new Size(listContainer.Width - 45, 75), Margin = new Padding(0, 0, 0, 10), BackColor = Color.FromArgb(160, 35, 35, 35), Cursor = Cursors.Hand };
+                card.MouseEnter += (s, e) => card.BackColor = Color.FromArgb(200, 50, 50, 50);
+                card.MouseLeave += (s, e) => card.BackColor = Color.FromArgb(160, 35, 35, 35);
                 card.Click += (s, e) => UpdateDetailPane(path, displayName);
-                card.MouseEnter += (s, e) => card.BackColor = Color.FromArgb(50, 50, 50);
-                card.MouseLeave += (s, e) => card.BackColor = Color.FromArgb(35, 35, 35);
 
-                PictureBox pic = new PictureBox { Image = GetIconSafely(path), Size = new Size(48, 48), Location = new Point(12, 13), SizeMode = PictureBoxSizeMode.StretchImage };
-                pic.Click += (s, e) => UpdateDetailPane(path, displayName);
-
-                Label lbl = new Label
-                {
-                    Text = displayName,
-                    ForeColor = Color.White,
-                    Location = new Point(70, 26),
-                    AutoSize = false,
-                    Width = card.Width - 150,
-                    Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                    AutoEllipsis = true
-                };
-                lbl.Click += (s, e) => UpdateDetailPane(path, displayName);
-
-                Button btnPlay = new Button
-                {
-                    Text = "▶",
-                    Location = new Point(card.Width - 65, 17),
-                    Size = new Size(50, 40),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Color.FromArgb(0, 120, 215),
-                    ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 14),
-                    Anchor = AnchorStyles.Right,
-                    Cursor = Cursors.Hand
-                };
+                PictureBox pic = new PictureBox { Image = GetIconSafely(path), Size = new Size(48, 48), Location = new Point(12, 13), SizeMode = PictureBoxSizeMode.StretchImage, BackColor = Color.Transparent, Enabled = false };
+                Label lbl = new Label { Text = displayName, ForeColor = Color.White, Location = new Point(70, 26), Width = card.Width - 150, Font = new Font("Segoe UI", 11, FontStyle.Bold), AutoEllipsis = true, BackColor = Color.Transparent, Enabled = false };
+                Button btnPlay = new Button { Text = "▶", Location = new Point(card.Width - 65, 17), Size = new Size(50, 40), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(0, 120, 215), ForeColor = Color.White, Font = new Font("Segoe UI", 14), Anchor = AnchorStyles.Right, Cursor = Cursors.Hand };
                 btnPlay.FlatAppearance.BorderSize = 0;
-                btnPlay.Click += (s, e) =>
-                {
-                    try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(path) }); }
-                    catch (Exception ex) { MessageBox.Show(ex.Message); }
-                };
+                btnPlay.Click += (s, e) => { try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(path) }); } catch (Exception ex) { MessageBox.Show(ex.Message); } };
 
-                card.Controls.Add(pic); card.Controls.Add(lbl); card.Controls.Add(btnPlay);
+                card.Controls.AddRange(new Control[] { pic, lbl, btnPlay });
                 flowGameList.Controls.Add(card);
             }
             flowGameList.ResumeLayout();
-            lblStatus.Text = $"{count} Games Found | {currentRootPath}";
+            lblStatus.Text = $"{flowGameList.Controls.Count} Games Found | {currentRootPath}";
         }
 
         private void UpdateDetailPane(string path, string name)
@@ -190,9 +160,7 @@ namespace gamelauncher
             {
                 detailIcon.Image = Icon.ExtractAssociatedIcon(path)?.ToBitmap();
                 lblDetailName.Text = name;
-                FileInfo fi = new FileInfo(path);
-                double sizeMb = fi.Exists ? fi.Length / (1024.0 * 1024.0) : 0;
-                lblDetailInfo.Text = $"File: {Path.GetFileName(path)}\n\nSize: {sizeMb:F2} MB\n\nLocation:\n{Path.GetDirectoryName(path)}\n\nType: {Path.GetExtension(path).ToUpper()}";
+                lblDetailInfo.Text = $"File: {Path.GetFileName(path)}\n\nSize: {(new FileInfo(path).Length / 1048576.0):F2} MB\n\nLocation:\n{Path.GetDirectoryName(path)}\n\nType: {Path.GetExtension(path).ToUpper()}";
                 lblDetailInfo.Tag = path;
             }
             catch { }
@@ -203,55 +171,47 @@ namespace gamelauncher
         private string GetGameName(string path)
         {
             if (path.ToLower().EndsWith(".lnk") || path.ToLower().EndsWith(".url")) return Path.GetFileNameWithoutExtension(path);
-            string relativePath = Path.GetRelativePath(currentRootPath, path);
-            string[] parts = relativePath.Split(Path.DirectorySeparatorChar);
-            return (parts.Length > 1) ? parts[0] : Path.GetFileNameWithoutExtension(path);
+            string[] parts = Path.GetRelativePath(currentRootPath, path).Split(Path.DirectorySeparatorChar);
+            return parts.Length > 1 ? parts[0] : Path.GetFileNameWithoutExtension(path);
         }
 
         private void HandleBrowse(object sender, EventArgs e)
         {
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
-            {
-                if (fbd.ShowDialog() == DialogResult.OK)
-                {
-                    currentRootPath = fbd.SelectedPath;
-                    File.WriteAllText(configPath, JsonSerializer.Serialize(new AppConfig { LastFolderPath = currentRootPath }));
-                    ScanGames(currentRootPath);
-                }
-            }
+                if (fbd.ShowDialog() == DialogResult.OK) { currentRootPath = fbd.SelectedPath; SaveConfig(currentRootPath, ""); ScanGames(currentRootPath); }
+        }
+
+        private void SaveConfig(string folder, string bg)
+        {
+            string oldBg = File.Exists(configPath) ? JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(configPath)).BgPath : "";
+            File.WriteAllText(configPath, JsonSerializer.Serialize(new AppConfig { LastFolderPath = folder, BgPath = string.IsNullOrEmpty(bg) ? oldBg : bg }));
         }
 
         private void ScanGames(string path)
         {
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) return;
             try
             {
                 allGamePaths = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-                    .Where(file =>
-                    {
-                        string lowFile = file.ToLower();
-                        return (lowFile.EndsWith(".exe") || lowFile.EndsWith(".lnk") || lowFile.EndsWith(".url")) && !ignoreWords.Any(word => lowFile.Contains(word));
-                    }).ToList();
-                UpdateScrollHiddenWidth();
-                RefreshList();
+                    .Where(f => (f.ToLower().EndsWith(".exe") || f.ToLower().EndsWith(".lnk") || f.ToLower().EndsWith(".url")) && !ignoreWords.Any(w => f.ToLower().Contains(w))).ToList();
+                SetupWatcher(path); // Update penjaga folder
+                UpdateScrollHiddenWidth(); RefreshList();
             }
             catch { }
         }
 
         private void LoadConfig()
         {
-            if (File.Exists(configPath))
+            if (!File.Exists(configPath)) return;
+            try
             {
-                try
-                {
-                    var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(configPath));
-                    if (config != null && Directory.Exists(config.LastFolderPath))
-                    {
-                        currentRootPath = config.LastFolderPath; ScanGames(currentRootPath);
-                    }
-                }
-                catch { }
+                var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(configPath));
+                if (config == null) return;
+                if (Directory.Exists(config.LastFolderPath)) { currentRootPath = config.LastFolderPath; ScanGames(currentRootPath); }
+                if (!string.IsNullOrEmpty(config.BgPath)) SetBackground(config.BgPath);
             }
+            catch { }
         }
     }
-    public class AppConfig { public string LastFolderPath { get; set; } = ""; }
+    public class AppConfig { public string LastFolderPath { get; set; } = ""; public string BgPath { get; set; } = ""; }
 }

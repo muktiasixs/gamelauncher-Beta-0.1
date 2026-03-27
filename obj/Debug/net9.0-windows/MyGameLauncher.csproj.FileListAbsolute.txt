@@ -12,3 +12,4 @@ C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\refint\MyGame
 C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.pdb
 C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.genruntimeconfig.cache
 C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\ref\MyGameLauncher.dll
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.sourcelink.json

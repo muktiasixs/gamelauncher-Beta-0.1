@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MyGameLauncher")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e231c057e5eb5eaf5a6fdb736fccbf0f5fff7428")]
 [assembly: System.Reflection.AssemblyProductAttribute("MyGameLauncher")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MyGameLauncher")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
