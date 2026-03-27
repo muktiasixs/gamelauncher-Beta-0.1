@@ -1,0 +1,14 @@
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.AssemblyInfoInputs.cache
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.AssemblyInfo.cs
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.csproj.CoreCompileInputs.cache
+C:\Users\user\Documents\code\gamelauncher\bin\Debug\net9.0-windows\MyGameLauncher.exe
+C:\Users\user\Documents\code\gamelauncher\bin\Debug\net9.0-windows\MyGameLauncher.deps.json
+C:\Users\user\Documents\code\gamelauncher\bin\Debug\net9.0-windows\MyGameLauncher.runtimeconfig.json
+C:\Users\user\Documents\code\gamelauncher\bin\Debug\net9.0-windows\MyGameLauncher.dll
+C:\Users\user\Documents\code\gamelauncher\bin\Debug\net9.0-windows\MyGameLauncher.pdb
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.dll
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\refint\MyGameLauncher.dll
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.pdb
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\MyGameLauncher.genruntimeconfig.cache
+C:\Users\user\Documents\code\gamelauncher\obj\Debug\net9.0-windows\ref\MyGameLauncher.dll
