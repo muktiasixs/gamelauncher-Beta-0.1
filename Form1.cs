@@ -34,7 +34,7 @@ namespace gamelauncher
 
         private void SetupUI()
         {
-            this.Text = "Game Launcher Pro v1.9 (Auto-Sync)";
+            this.Text = "Game Launcher BETA v0.2 (Auto-Sync)";
             try { this.Icon = new Icon("launchergame.ico"); } catch { }
             this.Size = new Size(1100, 750);
             this.MinimumSize = new Size(950, 600);
