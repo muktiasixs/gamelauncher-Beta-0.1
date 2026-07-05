@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("MyGameLauncher")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("GameLauncher_BETA")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e231c057e5eb5eaf5a6fdb736fccbf0f5fff7428")]
-[assembly: System.Reflection.AssemblyProductAttribute("MyGameLauncher")]
-[assembly: System.Reflection.AssemblyTitleAttribute("MyGameLauncher")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d5bd24b02d0864fd9a8269c17bbf485518f7b524")]
+[assembly: System.Reflection.AssemblyProductAttribute("GameLauncher_BETA")]
+[assembly: System.Reflection.AssemblyTitleAttribute("GameLauncher_BETA")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]

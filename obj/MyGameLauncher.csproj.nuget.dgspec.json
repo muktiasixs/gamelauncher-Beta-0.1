@@ -8,7 +8,7 @@
       "version": "1.0.0",
       "restore": {
         "projectUniqueName": "C:\\Users\\user\\Documents\\code\\gamelauncher\\MyGameLauncher.csproj",
-        "projectName": "MyGameLauncher",
+        "projectName": "GameLauncher_BETA",
         "projectPath": "C:\\Users\\user\\Documents\\code\\gamelauncher\\MyGameLauncher.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\user\\Documents\\code\\gamelauncher\\obj\\",
@@ -62,7 +62,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.315/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

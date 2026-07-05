@@ -32,9 +32,10 @@ Aplikasi ini dikembangkan sebagai bagian dari portofolio rekayasa perangkat luna
 
 ### Cara Instalasi & Penggunaan
 1. Unduh rilis terbaru (atau *clone* repositori dan lakukan *build* via Visual Studio 2022).
-2. Jalankan `GameLauncher_BETA.exe`.
-3. Klik tombol **Set Folder** di bagian atas untuk memilih direktori tempat game Anda terinstal.
-4. Aplikasi akan secara otomatis menyinkronkan daftar game Anda!
+2. Kumpulkan seluruh file game (file utuh `.exe` / *shortcut* `.lnk` / `.url`) yang Anda miliki ke dalam **satu folder besar** (contoh: `D:\Games`).
+3. Jalankan aplikasi `GameLauncher_BETA.exe`.
+4. Klik tombol **Set Folder** di bagian atas aplikasi, lalu pilih folder besar tempat Anda mengumpulkan game tersebut.
+5. Aplikasi akan secara otomatis menyinkronkan daftar game Anda, dan Anda siap bermain!
 
 ---
 
